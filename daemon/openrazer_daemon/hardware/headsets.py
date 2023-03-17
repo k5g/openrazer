@@ -125,8 +125,7 @@ class RazerKrakenV3(__RazerDevice):
     USB_VID = 0x1532
     USB_PID = 0x0549
     METHODS = ['get_device_type_headset',
-               'set_static_effect', 'set_spectrum_effect', 'set_none_effect', 'set_breath_single_effect', 'set_breath_dual_effect', 'set_breath_triple_effect',
-               'set_custom_kraken']
+               'set_static_effect', 'set_none_effect', 'set_custom_kraken']
 
     DEVICE_IMAGE = "https://dl.razerzone.com/src2/5698/5698-1-EN-v5.png"
 

@@ -704,7 +704,6 @@ static void razer_kraken_init(struct razer_kraken_device *dev, struct usb_interf
 
     switch(dev->usb_pid) {
     case USB_DEVICE_ID_RAZER_KRAKEN_V2:
-    case USB_DEVICE_ID_RAZER_KRAKEN_V3:
     case USB_DEVICE_ID_RAZER_KRAKEN_ULTIMATE:
         dev->led_mode_address = KYLIE_SET_LED_ADDRESS;
         dev->custom_address = KYLIE_CUSTOM_ADDRESS_START;
@@ -715,6 +714,7 @@ static void razer_kraken_init(struct razer_kraken_device *dev, struct usb_interf
     case USB_DEVICE_ID_RAZER_KRAKEN_CLASSIC:
     case USB_DEVICE_ID_RAZER_KRAKEN_CLASSIC_ALT:
     case USB_DEVICE_ID_RAZER_KRAKEN:
+    case USB_DEVICE_ID_RAZER_KRAKEN_V3:
         dev->led_mode_address = RAINIE_SET_LED_ADDRESS;
         dev->custom_address = RAINIE_CUSTOM_ADDRESS_START;
         dev->breathing_address[0] = RAINIE_BREATHING1_ADDRESS_START;
