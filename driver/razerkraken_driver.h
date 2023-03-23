@@ -161,6 +161,13 @@ struct razer_kraken_response_report {
 };
 
 
+struct razer_kraken_v3_report {
+    unsigned char header; /*0x40*/
+    unsigned char command_class;
+    unsigned char reserved_1; /*0x0*/
+    unsigned char arguments[10];
+};
+
 
 
 
