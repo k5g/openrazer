@@ -64,6 +64,8 @@ struct razer_kraken_v3_report razer_kraken_v3_matrix_effect_none(void)
 {
     struct razer_kraken_v3_report report = get_razer_kraken_v3_report(0x02);
 
+    report.arguments[1] = 0xff;
+
     return report;
 }
 
@@ -89,7 +91,7 @@ int razer_kraken_v3_send_control_msg(struct usb_device *usb_dev,void const *data
 {
     uint request = HID_REQ_SET_REPORT; // 0x09
     uint request_type = USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT; // 0x21
-    uint value = 0x300;
+    uint value = 0x240;
     uint size = RAZER_KRAKEN_V3_USB_REPORT_LEN;
     char *buf;
     int len;
@@ -139,7 +141,7 @@ int razer_get_kraken_v3_usb_response(struct usb_device *usb_dev, uint report_ind
     retval = razer_kraken_v3_send_control_msg(usb_dev, request_report, report_index, wait_min, wait_max);
 
     // Now ask for response
-    len = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
+    /*len = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
                           request,         // Request
                           request_type,    // RequestType
                           value,           // Value
@@ -155,7 +157,7 @@ int razer_get_kraken_v3_usb_response(struct usb_device *usb_dev, uint report_ind
     if(len != RAZER_KRAKEN_V3_USB_REPORT_LEN) {
         printk(KERN_WARNING "razer driver: Invalid USB response. USB Report length: %d\n", len);
         result = 1;
-    }
+    }*/
 
     //if (WARN_ONCE(response_report->data_size > ARRAY_SIZE(response_report->arguments),
     //              "Field data_size %d in response is bigger than arguments\n",
@@ -170,7 +172,7 @@ int razer_get_kraken_v3_usb_response(struct usb_device *usb_dev, uint report_ind
 
 static int razer_kraken_v3_get_report(struct usb_device *usb_dev, struct razer_kraken_v3_report *request, struct razer_kraken_v3_report *response)
 {
-    return razer_get_kraken_v3_usb_response(usb_dev, 0x00, request, 0x00, response, 31000, 31100);
+    return razer_get_kraken_v3_usb_response(usb_dev, 0x03, request, 0x00, response, 31000, 31100);
 }
 
 static int razer_kraken_v3_send_payload(struct usb_device *usb_dev, struct razer_kraken_v3_report *request, struct razer_kraken_v3_report *response)
