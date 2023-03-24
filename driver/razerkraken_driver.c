@@ -63,7 +63,6 @@ struct razer_kraken_v3_report get_razer_kraken_v3_report(unsigned char command_c
 struct razer_kraken_v3_report razer_kraken_v3_matrix_effect_none(void)
 {
     struct razer_kraken_v3_report report = get_razer_kraken_v3_report(0x02);
-    report.arguments[1] = 0x20;
 
     return report;
 }
