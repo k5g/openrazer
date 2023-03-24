@@ -210,6 +210,28 @@ static int razer_kraken_v3_send_payload(struct usb_device *usb_dev, struct razer
     return 0;
 }
 
+static int razer_kraken_v3_interrupt_msg(struct usb_device *usb_dev)
+{
+    char *buf;
+    int size = 0x17;
+    int actual_len, ret;
+
+    buf = kzalloc(size, GFP_KERNEL);
+	if(!buf) return -ENOMEM;
+
+    ret = usb_interrupt_msg(usb_dev, usb_sndintpipe(usb_dev, 0),
+		                    buf, size, &actual_len, USB_CTRL_SET_TIMEOUT);
+
+    msleep(30);
+
+    kfree(buf);
+    if (ret < 0)
+		return ret;
+	else if (actual_len != size)
+		return -EIO;
+	return 0;
+}
+
 static int razer_kraken_send_control_msg(struct usb_device *usb_dev,struct razer_kraken_request_report* report, unsigned char skip)
 {
     uint request = HID_REQ_SET_REPORT; // 0x09
@@ -797,7 +819,11 @@ static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_a
 
         mutex_lock(&device->lock);
         device->data[0] = 0x00;
-        razer_kraken_send_control_msg(device->usb_dev, &report, 1);
+
+        if(device->usb_pid==USB_DEVICE_ID_RAZER_KRAKEN_V3)
+            razer_kraken_v3_interrupt_msg(device->usb_dev);
+        else
+            razer_kraken_send_control_msg(device->usb_dev, &report, 1);
         msleep(25); // Sleep 20ms
 
         // Check for actual data
