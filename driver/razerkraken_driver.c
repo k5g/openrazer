@@ -820,10 +820,7 @@ static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_a
         mutex_lock(&device->lock);
         device->data[0] = 0x00;
 
-        if(device->usb_pid==USB_DEVICE_ID_RAZER_KRAKEN_V3)
-            razer_kraken_v3_interrupt_msg(device->usb_dev);
-        else
-            razer_kraken_send_control_msg(device->usb_dev, &report, 1);
+        razer_kraken_send_control_msg(device->usb_dev, &report, 1);
         msleep(25); // Sleep 20ms
 
         // Check for actual data
@@ -831,6 +828,7 @@ static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_a
             // Serial is present
             memcpy(&device->serial[0], &device->data[1], 22);
             device->serial[22] = '\0';
+            printk(KERN_CRIT "razerkraken: Serial from device = %s\n", &device->serial[0]);
         } else {
             printk(KERN_CRIT "razerkraken: Did not manage to get serial from device, using XX01 instead\n");
             device->serial[0] = 'X';
@@ -868,8 +866,16 @@ static ssize_t razer_attr_read_firmware_version(struct device *dev, struct devic
         if(device->data[0] == 0x05) {
             // Serial is present
             device->firmware_version[0] = 1;
-            device->firmware_version[1] = device->data[1];
-            device->firmware_version[2] = device->data[2];
+            switch(device->usb_pid) {
+            case USB_DEVICE_ID_RAZER_KRAKEN_V3:
+                device->firmware_version[1] = device->data[2];
+                device->firmware_version[2] = device->data[1];
+                break;
+            default:
+                device->firmware_version[1] = device->data[1];
+                device->firmware_version[2] = device->data[2];
+                break;
+            }            
         } else {
             printk(KERN_CRIT "razerkraken: Did not manage to get firmware version from device, using v9.99 instead\n");
             device->firmware_version[0] = 1;
@@ -1109,9 +1115,9 @@ static int razer_raw_event(struct hid_device *hdev, struct hid_report *report, u
 {
     struct razer_kraken_device *device = dev_get_drvdata(&hdev->dev);
 
-    //printk(KERN_WARNING "razerkraken: Got raw message %d\n", size);
+    printk(KERN_WARNING "razerkraken: Got raw message %d\n", size);
 
-    if(size == 33) { // Should be a response to a Control packet
+    if((size == 33) || (size == 23)) { // Should be a response to a Control packet
         memcpy(&device->data[0], &data[0], size);
 
     } else {
