@@ -427,6 +427,14 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
 
         reportv3_static = razer_kraken_v3_matrix_effect_static();
 
+        /* test */
+        /* 3 = spectrum */
+        /* 2 = breath random */
+        /*if(kraken_v3_rgb.b!=0)
+            reportv3_static.arguments[1] = kraken_v3_rgb.b;
+        if(kraken_v3_rgb.b==100)
+            reportv3_static.arguments[1] = 0;*/
+
         mutex_lock(&device->lock);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_static, 1);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_rgb, 1);
