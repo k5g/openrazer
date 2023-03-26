@@ -67,7 +67,15 @@ struct razer_kraken_v3_report razer_kraken_v3_matrix_effect_none(void)
     return report;
 }
 
-struct razer_kraken_v3_report razer_kraken_v3_matrix_effect_static(struct razer_rgb *rgb1)
+struct razer_kraken_v3_report razer_kraken_v3_matrix_effect_static(void)
+{
+    struct razer_kraken_v3_report report = get_razer_kraken_v3_report(0x01);
+    report.arguments[1] = 0x08;
+
+    return report;
+}
+
+struct razer_kraken_v3_report razer_kraken_v3_matrix_effect_rgb(struct razer_rgb *rgb1)
 {
     struct razer_kraken_v3_report report = get_razer_kraken_v3_report(0x03);
     report.arguments[0] = rgb1->r; /*rgb color definition*/
@@ -400,7 +408,8 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
     struct razer_kraken_request_report rgb_report = get_kraken_request_report(0x04, 0x40, count, device->breathing_address[0]);
     struct razer_kraken_request_report effect_report = get_kraken_request_report(0x04, 0x40, 0x01, device->led_mode_address);
     union razer_kraken_effect_byte effect_byte = get_kraken_effect_byte();
-    struct razer_kraken_v3_report reportv3 = {0};
+    struct razer_kraken_v3_report reportv3_rgb = {0};
+    struct razer_kraken_v3_report reportv3_static = {0};
     struct razer_rgb kraken_v3_rgb = {0};
 
     switch(device->usb_pid) {
@@ -412,10 +421,15 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
         kraken_v3_rgb.r = buf[0];
         kraken_v3_rgb.g = buf[1];
         kraken_v3_rgb.b = buf[2];
-        reportv3 = razer_kraken_v3_matrix_effect_static(&kraken_v3_rgb);
+        reportv3_rgb = razer_kraken_v3_matrix_effect_rgb(&kraken_v3_rgb);
+        /*if(kraken_v3_rgb.b!=0)
+           reportv3.command_class = kraken_v3_rgb.b;*/
+
+        reportv3_static = razer_kraken_v3_matrix_effect_static();
 
         mutex_lock(&device->lock);
-        razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
+        razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_static, 1);
+        razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_rgb, 1);
         mutex_unlock(&device->lock);
         break;
     default:
