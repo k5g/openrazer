@@ -23,6 +23,18 @@
 
 // #define RAZER_KRAKEN_V2_REPORT_LEN ?
 
+union razer_kraken_effect_byte {
+    unsigned char value;
+    struct razer_kraken_effect_byte_bits {
+        unsigned char on_off_static :1;
+        unsigned char single_colour_breathing :1;
+        unsigned char spectrum_cycling :1;
+        unsigned char sync :1;
+        unsigned char two_colour_breathing :1;
+        unsigned char three_colour_breathing :1;
+    } bits;
+};
+
 struct razer_kraken_device {
     struct usb_device *usb_dev;
     struct mutex lock;
@@ -41,18 +53,9 @@ struct razer_kraken_device {
 
     u8 data[33];
 
-};
-
-union razer_kraken_effect_byte {
-    unsigned char value;
-    struct razer_kraken_effect_byte_bits {
-        unsigned char on_off_static :1;
-        unsigned char single_colour_breathing :1;
-        unsigned char spectrum_cycling :1;
-        unsigned char sync :1;
-        unsigned char two_colour_breathing :1;
-        unsigned char three_colour_breathing :1;
-    } bits;
+    // Used only for Kraken V3 headsets
+    union razer_kraken_effect_byte effect;
+    unsigned char brightness;
 };
 
 /*

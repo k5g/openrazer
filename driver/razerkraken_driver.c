@@ -224,6 +224,11 @@ static unsigned char get_current_effect(struct device *dev)
     int is_mutex_locked = mutex_is_locked(&device->lock);
     unsigned char result = 0;
 
+    switch(device->usb_pid) {
+    case USB_DEVICE_ID_RAZER_KRAKEN_V3:
+        return device->effect.value;
+    }
+
     // Lock if there isn't already a lock, otherwise skip, essentially emulate a rentrant lock
     if(is_mutex_locked == 0) {
         mutex_lock(&device->lock);
@@ -363,18 +368,25 @@ static ssize_t razer_attr_write_matrix_effect_spectrum(struct device *dev, struc
     union razer_kraken_effect_byte effect_byte = get_kraken_effect_byte();
     struct razer_kraken_v3_report reportv3;
 
+    // Spectrum Cycling | ON
+    effect_byte.bits.on_off_static = 1;
+    effect_byte.bits.spectrum_cycling = 1;
+
     switch(device->usb_pid) {
     case USB_DEVICE_ID_RAZER_KRAKEN_V3:
         reportv3 = razer_kraken_v3_matrix_effect_spectrum();
         mutex_lock(&device->lock);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
+
+        if(device->effect.bits.on_off_static==0) {
+            reportv3 = razer_kraken_v3_matrix_brightness(device->brightness);
+            razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
+        }
         mutex_unlock(&device->lock);
+
+        device->effect = effect_byte;
         break;
     default:
-        // Spectrum Cycling | ON
-        effect_byte.bits.on_off_static = 1;
-        effect_byte.bits.spectrum_cycling = 1;
-
         report.arguments[0] = effect_byte.value;
 
         // Lock access to sending USB as adhering to the razer len*15ms delay
@@ -398,18 +410,20 @@ static ssize_t razer_attr_write_matrix_effect_none(struct device *dev, struct de
     union razer_kraken_effect_byte effect_byte = get_kraken_effect_byte();
     struct razer_kraken_v3_report reportv3;
 
+    // Spectrum Cycling | OFF
+    effect_byte.bits.on_off_static = 0;
+    effect_byte.bits.spectrum_cycling = 0;
+
     switch(device->usb_pid) {
     case USB_DEVICE_ID_RAZER_KRAKEN_V3:
         reportv3 = razer_kraken_v3_matrix_effect_none();
         mutex_lock(&device->lock);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
         mutex_unlock(&device->lock);
+
+        device->effect = effect_byte;
         break;
     default:
-        // Spectrum Cycling | OFF
-        effect_byte.bits.on_off_static = 0;
-        effect_byte.bits.spectrum_cycling = 0;
-
         report.arguments[0] = effect_byte.value;
 
         // Lock access to sending USB as adhering to the razer len*15ms delay
@@ -436,7 +450,11 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
     union razer_kraken_effect_byte effect_byte = get_kraken_effect_byte();
     struct razer_kraken_v3_report reportv3_rgb = {0};
     struct razer_kraken_v3_report reportv3_static = {0};
+    struct razer_kraken_v3_report reportv3 = {0};
     struct razer_rgb kraken_v3_rgb = {0};
+
+    // ON/Static
+    effect_byte.bits.on_off_static = 1;
 
     switch(device->usb_pid) {
     case USB_DEVICE_ID_RAZER_KRAKEN_V3:
@@ -464,7 +482,13 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
         mutex_lock(&device->lock);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_static, 1);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_rgb, 1);
+        if(device->effect.bits.on_off_static==0) {
+            reportv3 = razer_kraken_v3_matrix_brightness(device->brightness);
+            razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
+        }
         mutex_unlock(&device->lock);
+
+        device->effect = effect_byte;
         break;
     default:
         if (count != 3 && count != 4) {
@@ -480,8 +504,6 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
             rgb_report.arguments[3] = buf[3];
         }
 
-        // ON/Static
-        effect_byte.bits.on_off_static = 1;
         effect_report.arguments[0] = effect_byte.value;
 
         // Lock sending of the 2 commands
@@ -520,6 +542,8 @@ static ssize_t razer_attr_write_matrix_brightness(struct device *dev, struct dev
         mutex_lock(&device->lock);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
         mutex_unlock(&device->lock);
+
+        device->brightness = brightness;
         break;
     }
 
@@ -578,7 +602,13 @@ static ssize_t razer_attr_read_matrix_effect_static(struct device *dev, struct d
 
 static ssize_t razer_attr_read_matrix_brightness(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return 0;
+    struct razer_kraken_device *device = dev_get_drvdata(dev);
+
+    switch(device->usb_pid) {
+    case USB_DEVICE_ID_RAZER_KRAKEN_V3:
+        return device->brightness;
+    }
+    return 0xff;
 }
 
 /**
@@ -613,11 +643,20 @@ static ssize_t razer_attr_write_matrix_effect_breath(struct device *dev, struct 
     if(device->usb_pid == USB_DEVICE_ID_RAZER_KRAKEN_V3) {
         reportv3 = razer_kraken_v3_matrix_effect_breath();
 
+        // ON/Static
+        effect_byte.bits.on_off_static = 1;
+        effect_byte.bits.single_colour_breathing = 1;
+
         printk(KERN_WARNING "razerkraken: Breathing mode (%d bytes))\n", (int)count);
         mutex_lock(&device->lock);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
+        if(device->effect.bits.on_off_static==0) {
+            reportv3 = razer_kraken_v3_matrix_brightness(device->brightness);
+            razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
+        }
         mutex_unlock(&device->lock);
 
+        device->effect = effect_byte;
         return count;
     }
 
