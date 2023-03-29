@@ -480,7 +480,8 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
             reportv3_static.arguments[1] = 0;*/
 
         mutex_lock(&device->lock);
-        razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_static, 1);
+        if(device->effect.value != effect_byte.value)
+            razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_static, 1);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3_rgb, 1);
         if(device->effect.bits.on_off_static==0) {
             reportv3 = razer_kraken_v3_matrix_brightness(device->brightness);
@@ -537,11 +538,15 @@ static ssize_t razer_attr_write_matrix_brightness(struct device *dev, struct dev
 
     switch(device->usb_pid) {
     case USB_DEVICE_ID_RAZER_KRAKEN_V3:
-        reportv3 = razer_kraken_v3_matrix_brightness(brightness);
+        if(device->effect.bits.on_off_static!=0) {
+            reportv3 = razer_kraken_v3_matrix_brightness(brightness);
 
-        mutex_lock(&device->lock);
-        razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
-        mutex_unlock(&device->lock);
+            mutex_lock(&device->lock);
+            razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
+            mutex_unlock(&device->lock);
+        } else {
+            // Cancel brightness when no effect is selected
+        }
 
         device->brightness = brightness;
         break;
@@ -647,7 +652,6 @@ static ssize_t razer_attr_write_matrix_effect_breath(struct device *dev, struct 
         effect_byte.bits.on_off_static = 1;
         effect_byte.bits.single_colour_breathing = 1;
 
-        printk(KERN_WARNING "razerkraken: Breathing mode (%d bytes))\n", (int)count);
         mutex_lock(&device->lock);
         razer_kraken_v3_send_control_msg(device->usb_dev, &reportv3, 1);
         if(device->effect.bits.on_off_static==0) {
