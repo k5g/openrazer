@@ -54,7 +54,6 @@ struct razer_kraken_device {
     u8 data[33];
 
     // Used only for Kraken V3 headsets
-    union razer_kraken_effect_byte effect;
     unsigned char brightness;
 };
 
