@@ -40,6 +40,9 @@ pylib/docs/_build
 .kdev4/*
 *.kdev4
 
+# vscode files
+.vscode/*
+
 # vim temp files
 *.un~
 *~

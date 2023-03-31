@@ -159,6 +159,21 @@ class RazerKrakenUltimate(__RazerDevice):
             _dbus_chroma.set_breath_triple_effect(self, *args)
 
 
+class RazerKrakenV3(__RazerDeviceBrightnessSuspend):
+    """
+    Class for the Razer Kraken V3
+    """
+    EVENT_FILE_REGEX = re.compile(r'.*Razer_Kraken_V3_0+-event-if03')
+
+    USB_VID = 0x1532
+    USB_PID = 0x0549
+    METHODS = ['get_device_type_headset',
+               'set_none_effect', 'set_brightness', 'get_brightness', 'set_static_effect',
+               'set_spectrum_effect', 'set_breath_random_effect']
+
+    DEVICE_IMAGE = "https://dl.razerzone.com/src2/5698/5698-1-EN-v5.png"
+
+
 class RazerKrakenKittyEdition(__RazerDeviceBrightnessSuspend):
     """
     Class for the Razer Kraken Kitty Edition
