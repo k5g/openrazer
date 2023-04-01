@@ -591,6 +591,8 @@ static ssize_t razer_attr_write_matrix_brightness(struct device *dev, struct dev
         break;
     }
 
+    printk(KERN_WARNING "razerkraken: Set brightness = %d\n", (int)brightness);
+
     return count;
 }
 
@@ -648,10 +650,13 @@ static ssize_t razer_attr_read_matrix_brightness(struct device *dev, struct devi
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
 
+    printk(KERN_WARNING "razerkraken: Get brightness\n");
+
     switch(device->usb_pid) {
     case USB_DEVICE_ID_RAZER_KRAKEN_V3:
         return device->brightness;
     }
+
     return 0xff;
 }
 
@@ -1005,7 +1010,7 @@ static void razer_kraken_init(struct razer_kraken_device *dev, struct usb_interf
 /**
  * Probe method is ran whenever a device is binded to the driver
  */
-static int razer_kraken_probe(struct hid_device *hdev, const struct hid_device_id *id)
+static int razer_krakenv3_probe(struct hid_device *hdev, const struct hid_device_id *id)
 {
     int retval = 0;
     struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
@@ -1168,9 +1173,9 @@ MODULE_DEVICE_TABLE(hid, razer_devices);
  * Describes the contents of the driver
  */
 static struct hid_driver razer_kraken_driver = {
-    .name = "razerkraken",
+    .name = "razerkrakenv3",
     .id_table = razer_devices,
-    .probe = razer_kraken_probe,
+    .probe = razer_krakenv3_probe,
     .remove = razer_kraken_disconnect,
     .raw_event = razer_raw_event
 };
