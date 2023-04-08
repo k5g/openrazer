@@ -278,7 +278,7 @@ static unsigned char get_current_effect(struct device *dev)
     return effect.value;
 }
 
-static unsigned int get_rgb_from_addr(struct device *dev, unsigned short address, unsigned char len, char* buf) //#to_review
+static unsigned int get_rgb_from_addr(struct device *dev, unsigned char len, char* buf) //#to_review
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
     struct razer_kraken_v3_report report_current_color = get_razer_kraken_request_report_current_color();
@@ -462,8 +462,7 @@ static ssize_t razer_attr_write_matrix_brightness(struct device *dev, struct dev
  */
 static ssize_t razer_attr_read_matrix_effect_static(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    struct razer_kraken_device *device = dev_get_drvdata(dev);
-    return get_rgb_from_addr(dev, device->breathing_address[0], 0x04, buf);
+    return get_rgb_from_addr(dev, 0x04, buf); //#to_review
 }
 
 static ssize_t razer_attr_read_matrix_brightness(struct device *dev, struct device_attribute *attr, char *buf)
@@ -508,9 +507,7 @@ static ssize_t razer_attr_write_matrix_effect_breath(struct device *dev, struct 
  */
 static ssize_t razer_attr_read_matrix_effect_breath(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    struct razer_kraken_device *device = dev_get_drvdata(dev); //#to_review
-
-    return get_rgb_from_addr(dev, device->breathing_address[0], 0x04, buf);
+    return get_rgb_from_addr(dev, 0x04, buf); //#to_review
 }
 
 /**

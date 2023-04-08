@@ -32,19 +32,13 @@ struct razer_kraken_device {
     unsigned short usb_pid;
     unsigned short usb_vid;
 
-    // Will be set with the correct address for setting LED mode for each device
-    unsigned short led_mode_address;
-    unsigned short custom_address;
-    unsigned short breathing_address[3];
+    unsigned char brightness;
 
     char serial[23];
     // 3 Bytes, first byte is whether fw version is collected, 2nd byte is major version, 3rd is minor, should be printed out in hex form as are bcd
     unsigned char firmware_version[3];
 
     u8 data[33];
-
-    // Used only for Kraken V3 headsets
-    unsigned char brightness;
 };
 
 struct razer_kraken_request_report {
