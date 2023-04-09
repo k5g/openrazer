@@ -64,7 +64,7 @@ struct razer_kraken_v3_report get_razer_kraken_request_report_effect_none(void)
 {
     struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x01);
     report.arguments[1] = 0x08;
-    report.reserved_1 = 1;
+    report.sub_command = 1;
 
     return report;
 }
@@ -149,7 +149,7 @@ static int razer_kraken_v3_send_control_msg(struct usb_device *usb_dev,struct ra
 
     // Wait
     if(skip != 1) {
-        msleep(report->reserved_1 * 15);
+        msleep(report->sub_command * 15);
     }
 
     kfree(buf);
@@ -193,6 +193,51 @@ static int razer_kraken_send_control_msg(struct usb_device *usb_dev,struct razer
         printk(KERN_WARNING "razer driver: Device data transfer failed.\n");
 
     return ((len < 0) ? len : ((len != size) ? -EIO : 0));
+}
+
+static int razer_krakenv3_send_control_long_msg(struct usb_device *usb_dev, struct razer_krakenv3_technical_report* report)
+{
+    uint request = HID_REQ_SET_REPORT; // 0x09
+    uint request_type = USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT; // 0x21
+    uint value = 0x0204;
+    uint index = 0x0003;
+    uint size = sizeof(struct razer_krakenv3_technical_report);
+    char *buf;
+    int len;
+
+    buf = kmemdup(report, size, GFP_KERNEL);
+    if (buf == NULL)
+        return -ENOMEM;
+
+    // Send usb control message
+    len = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
+                          request,      // Request      U8
+                          request_type, // RequestType  U8
+                          value,        // Value        U16
+                          index,        // Index        U16
+                          buf,          // Data         void* data
+                          size,         // Length       U16
+                          USB_CTRL_SET_TIMEOUT); //     Int
+
+    kfree(buf);
+    if(len!=size)
+        printk(KERN_WARNING "razer driver: Device data transfer failed.\n");
+
+    return ((len < 0) ? len : ((len != size) ? -EIO : 0));
+}
+
+static struct razer_krakenv3_technical_report get_krakenv3_request_technical_report(unsigned char length, unsigned short address)
+{
+    struct razer_krakenv3_technical_report report;
+    memset(&report, 0, sizeof(struct razer_krakenv3_technical_report));
+
+    report.report_id = 0x04;
+    report.destination = 0x20;
+    report.length = length;
+    report.addr_h = (address >> 8);
+    report.addr_l = (address & 0xFF);
+
+    return report;
 }
 
 /**
@@ -559,15 +604,15 @@ static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_a
 static ssize_t razer_attr_read_firmware_version(struct device *dev, struct device_attribute *attr, char *buf)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_kraken_request_report report = get_kraken_request_report(0x04, 0x20, 0x02, 0x0030);
+    struct razer_krakenv3_technical_report report = get_krakenv3_request_technical_report(0x02, 0x0030);
 
     // Basically some simple caching
     if(device->firmware_version[0] != 1) {
 
         mutex_lock(&device->lock);
         device->data[0] = 0x00;
-        razer_kraken_send_control_msg(device->usb_dev, &report, 1);
-        msleep(25); // Sleep 20ms
+        razer_krakenv3_send_control_long_msg(device->usb_dev, &report);
+        msleep(25);
 
         // Check for actual data
         if(device->data[0] == 0x05) {
@@ -584,7 +629,7 @@ static ssize_t razer_attr_read_firmware_version(struct device *dev, struct devic
         mutex_unlock(&device->lock);
     }
 
-    return sprintf(buf, "v%x.%x\n", device->firmware_version[1], device->firmware_version[2]);
+    return sprintf(buf, "v%x%x\n", device->firmware_version[1], device->firmware_version[2]);
 }
 
 /**

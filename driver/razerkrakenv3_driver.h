@@ -50,16 +50,19 @@ struct razer_kraken_request_report {
     unsigned char arguments[32];
 };
 
-struct razer_kraken_response_report {
-    unsigned char report_id;
-    unsigned char arguments[36];
+struct razer_krakenv3_technical_report {
+    unsigned char report_id; /* 0x04 */
+    unsigned char destination; /* 0x20 */
+    unsigned char length;
+    unsigned char addr_h;
+    unsigned char addr_l;
+    unsigned char arguments[22];
 };
-
 
 struct razer_kraken_v3_report {
     unsigned char header; /*0x40*/
     unsigned char command_class;
-    unsigned char reserved_1; /*0x0*/
+    unsigned char sub_command;
     unsigned char arguments[10];
 };
 
