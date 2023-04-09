@@ -19,8 +19,6 @@
  */
 #define DRIVER_DESC "Razer Headsets Device Driver"
 
-#define RAZER_KRAKEN_V3_USB_REPORT_LEN 13
-
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_VERSION(DRIVER_VERSION);
@@ -123,7 +121,21 @@ struct razer_kraken_v3_report get_razer_kraken_request_report_current_color(void
     return report;
 }
 
-static int razer_kraken_v3_send_control_msg(struct usb_device *usb_dev,struct razer_kraken_v3_report* report, unsigned char skip)
+struct razer_krakenv3_technical_report get_krakenv3_request_technical_report(unsigned char length, unsigned short address)
+{
+    struct razer_krakenv3_technical_report report;
+    memset(&report, 0, sizeof(struct razer_krakenv3_technical_report));
+
+    report.report_id = 0x04;
+    report.destination = 0x20;
+    report.length = length;
+    report.addr_h = (address >> 8);
+    report.addr_l = (address & 0xFF);
+
+    return report;
+}
+
+/*static int razer_kraken_v3_send_control_msg(struct usb_device *usb_dev,struct razer_kraken_v3_report* report, unsigned char skip)
 {
     uint request = HID_REQ_SET_REPORT; // 0x09
     uint request_type = USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT; // 0x21
@@ -157,7 +169,7 @@ static int razer_kraken_v3_send_control_msg(struct usb_device *usb_dev,struct ra
         printk(KERN_WARNING "razer driver: Device data transfer failed.\n");
 
     return ((len < 0) ? len : ((len != size) ? -EIO : 0));
-}
+}*/
 
 /*static int razer_kraken_send_control_msg(struct usb_device *usb_dev,struct razer_kraken_request_report* report, unsigned char skip)
 {
@@ -226,13 +238,12 @@ static int razer_kraken_v3_send_control_msg(struct usb_device *usb_dev,struct ra
     return ((len < 0) ? len : ((len != size) ? -EIO : 0));
 }*/
 
-static int razer_krakenv3_send_control_msg(struct usb_device *usb_dev, uint size, void *report)
+static int razer_krakenv3_send_control_msg_generic(struct usb_device *usb_dev, uint size, void *report)
 {
     uint request = HID_REQ_SET_REPORT; // 0x09
     uint request_type = USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT; // 0x21
-    uint value = 0x0204;
+    uint value = 0x0200 | ((unsigned char*)report)[0];
     uint index = 0x0003;
-    //uint size = sizeof(struct razer_krakenv3_technical_report);
     char *buf;
     int len;
 
@@ -257,19 +268,12 @@ static int razer_krakenv3_send_control_msg(struct usb_device *usb_dev, uint size
     return ((len < 0) ? len : ((len != size) ? -EIO : 0));
 }
 
-static struct razer_krakenv3_technical_report get_krakenv3_request_technical_report(unsigned char length, unsigned short address)
+
+static int razer_kraken_v3_send_control_msg(struct usb_device *usb_dev,struct razer_kraken_v3_report* report, unsigned char skip)
 {
-    struct razer_krakenv3_technical_report report;
-    memset(&report, 0, sizeof(struct razer_krakenv3_technical_report));
-
-    report.report_id = 0x04;
-    report.destination = 0x20;
-    report.length = length;
-    report.addr_h = (address >> 8);
-    report.addr_l = (address & 0xFF);
-
-    return report;
+    return razer_krakenv3_send_control_msg_generic(usb_dev, sizeof(report), report);
 }
+
 
 /**
  * Get a union containing the effect bitfield
@@ -581,7 +585,7 @@ static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_a
         mutex_lock(&device->lock);
         device->data[0] = 0x00;
 
-        razer_krakenv3_send_control_msg(device->usb_dev, sizeof(struct razer_krakenv3_technical_report), &report);
+        razer_krakenv3_send_control_msg_generic(device->usb_dev, sizeof(struct razer_krakenv3_technical_report), &report);
         msleep(25);
 
         // Check for actual data
@@ -620,7 +624,7 @@ static ssize_t razer_attr_read_firmware_version(struct device *dev, struct devic
 
         mutex_lock(&device->lock);
         device->data[0] = 0x00;
-        razer_krakenv3_send_control_msg(device->usb_dev, sizeof(struct razer_krakenv3_technical_report), &report);
+        razer_krakenv3_send_control_msg_generic(device->usb_dev, sizeof(struct razer_krakenv3_technical_report), &report);
         msleep(25);
 
         // Check for actual data
