@@ -11,8 +11,6 @@
 
 #define USB_INTERFACE_PROTOCOL_NONE 0
 
-// #define RAZER_KRAKEN_V2_REPORT_LEN ?
-
 union razer_kraken_effect_byte {
     unsigned char value;
     struct razer_kraken_effect_byte_bits {
@@ -39,15 +37,6 @@ struct razer_kraken_device {
     unsigned char firmware_version[3];
 
     u8 data[33];
-};
-
-struct razer_kraken_request_report {
-    unsigned char report_id;
-    unsigned char destination;
-    unsigned char length;
-    unsigned char addr_h;
-    unsigned char addr_l;
-    unsigned char arguments[32];
 };
 
 struct razer_krakenv3_technical_report {
