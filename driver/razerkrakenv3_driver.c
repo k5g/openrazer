@@ -27,10 +27,10 @@ MODULE_LICENSE(DRIVER_LICENSE);
 /**
  * Get initialised razer kraken v3 report
  */
-static struct razer_kraken_v3_report get_razer_kraken_v3_request_report(unsigned char command_class)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report(unsigned char command_class)
 {
-    struct razer_kraken_v3_report new_report = {0};
-    memset(&new_report, 0, sizeof(struct razer_kraken_v3_report));
+    struct razer_krakenv3_report new_report;
+    memset(&new_report, 0, sizeof(struct razer_krakenv3_report));
 
     new_report.header = 0x40;
     new_report.command_class = command_class;
@@ -38,26 +38,26 @@ static struct razer_kraken_v3_report get_razer_kraken_v3_request_report(unsigned
     return new_report;
 }
 
-static struct razer_kraken_v3_report get_razer_kraken_request_report_effect_none(void)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report_effect_none(void)
 {
-    struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x01);
+    struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x01);
     report.arguments[1] = 0x08;
     report.sub_command = 1;
 
     return report;
 }
 
-static struct razer_kraken_v3_report get_razer_kraken_request_report_effect_static(void)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report_effect_static(void)
 {
-    struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x01);
+    struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x01);
     report.arguments[1] = 0x08;
 
     return report;
 }
 
-static struct razer_kraken_v3_report get_razer_kraken_request_report_effect_rgb(struct razer_rgb *rgb1)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report_effect_rgb(struct razer_rgb *rgb1)
 {
-    struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x03);
+    struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x03);
     report.arguments[0] = rgb1->r; /*rgb color definition*/
     report.arguments[1] = rgb1->g;
     report.arguments[2] = rgb1->b;
@@ -65,46 +65,46 @@ static struct razer_kraken_v3_report get_razer_kraken_request_report_effect_rgb(
     return report;
 }
 
-static struct razer_kraken_v3_report get_razer_kraken_request_report_effect_spectrum(void)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report_effect_spectrum(void)
 {
-    struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x01);
+    struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x01);
     report.arguments[1] = 0x03;
 
     return report;
 }
 
-static struct razer_kraken_v3_report get_razer_kraken_request_report_effect_breath(void)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report_effect_breath(void)
 {
-    struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x01);
+    struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x01);
     report.arguments[1] = 0x02;
 
     return report;
 }
 
-static struct razer_kraken_v3_report get_razer_kraken_request_report_brightness(unsigned char brightness)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report_brightness(unsigned char brightness)
 {
-    struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x02);
+    struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x02);
     report.arguments[1] = brightness;
 
     return report;
 }
 
-static struct razer_kraken_v3_report get_razer_kraken_request_report_current_effect(void)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report_current_effect(void)
 {
-    struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x81);
+    struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x81);
     return report;
 }
 
-static struct razer_kraken_v3_report get_razer_kraken_request_report_current_color(void)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report_current_color(void)
 {
-    struct razer_kraken_v3_report report = get_razer_kraken_v3_request_report(0x81);
+    struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x81);
     return report;
 }
 
-static struct razer_krakenv3_technical_report get_krakenv3_request_technical_report(unsigned char length, unsigned short address)
+static struct razer_krakenv3_device_info_report get_krakenv3_request_technical_report(unsigned char length, unsigned short address)
 {
-    struct razer_krakenv3_technical_report report;
-    memset(&report, 0, sizeof(struct razer_krakenv3_technical_report));
+    struct razer_krakenv3_device_info_report report;
+    memset(&report, 0, sizeof(struct razer_krakenv3_device_info_report));
 
     report.report_id = 0x04;
     report.destination = 0x20;
@@ -146,7 +146,7 @@ static int razer_krakenv3_send_control_msg_generic(struct usb_device *usb_dev, u
 }
 
 
-static int razer_krakenv3_send_control_msg(struct usb_device *usb_dev,struct razer_kraken_v3_report* report)
+static int razer_krakenv3_send_control_msg(struct usb_device *usb_dev,struct razer_krakenv3_report* report)
 {
     return razer_krakenv3_send_control_msg_generic(usb_dev, sizeof(report), report);
 }
@@ -169,7 +169,7 @@ static union razer_kraken_effect_byte get_kraken_effect_byte(void)
 static unsigned char get_current_effect(struct device *dev)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_kraken_v3_report report_current_effect = get_razer_kraken_request_report_current_effect();
+    struct razer_krakenv3_report report_current_effect = get_razer_krakenv3_request_report_current_effect();
     union razer_kraken_effect_byte effect = get_kraken_effect_byte();
 
     int is_mutex_locked = mutex_is_locked(&device->lock);
@@ -216,7 +216,7 @@ static unsigned char get_current_effect(struct device *dev)
 static unsigned int get_rgb_from_addr(struct device *dev, unsigned char len, char* buf) //#to_review
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_kraken_v3_report report_current_color = get_razer_kraken_request_report_current_color();
+    struct razer_krakenv3_report report_current_color = get_razer_krakenv3_request_report_current_color();
     int is_mutex_locked = mutex_is_locked(&device->lock);
     unsigned char written = 0;
 
@@ -309,7 +309,7 @@ static ssize_t razer_attr_read_test(struct device *dev, struct device_attribute 
 static ssize_t razer_attr_write_matrix_effect_spectrum(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_kraken_v3_report report_effect_spectrum = get_razer_kraken_request_report_effect_spectrum();
+    struct razer_krakenv3_report report_effect_spectrum = get_razer_krakenv3_request_report_effect_spectrum();
 
     // USB_DEVICE_ID_RAZER_KRAKEN_V3
     mutex_lock(&device->lock);
@@ -328,8 +328,8 @@ static ssize_t razer_attr_write_matrix_effect_none(struct device *dev, struct de
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
     struct razer_rgb kraken_v3_rgb = {0};
-    struct razer_kraken_v3_report report_effect_none = get_razer_kraken_request_report_effect_none();
-    struct razer_kraken_v3_report report_setcolor = get_razer_kraken_request_report_effect_rgb(&kraken_v3_rgb);
+    struct razer_krakenv3_report report_effect_none = get_razer_krakenv3_request_report_effect_none();
+    struct razer_krakenv3_report report_setcolor = get_razer_krakenv3_request_report_effect_rgb(&kraken_v3_rgb);
 
     // USB_DEVICE_ID_RAZER_KRAKEN_V3:
     mutex_lock(&device->lock);
@@ -349,8 +349,8 @@ static ssize_t razer_attr_write_matrix_effect_none(struct device *dev, struct de
 static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_kraken_v3_report report_effect_static = get_razer_kraken_request_report_effect_static();
-    struct razer_kraken_v3_report report_setcolor = {0};
+    struct razer_krakenv3_report report_effect_static = get_razer_krakenv3_request_report_effect_static();
+    struct razer_krakenv3_report report_setcolor = {0};
     struct razer_rgb kraken_v3_rgb = {0};
 
     // USB_DEVICE_ID_RAZER_KRAKEN_V3
@@ -361,7 +361,7 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
     kraken_v3_rgb.r = buf[0];
     kraken_v3_rgb.g = buf[1];
     kraken_v3_rgb.b = buf[2];
-    report_setcolor = get_razer_kraken_request_report_effect_rgb(&kraken_v3_rgb);
+    report_setcolor = get_razer_krakenv3_request_report_effect_rgb(&kraken_v3_rgb);
 
     mutex_lock(&device->lock);
     razer_krakenv3_send_control_msg(device->usb_dev, &report_effect_static);
@@ -377,7 +377,7 @@ static ssize_t razer_attr_write_matrix_brightness(struct device *dev, struct dev
     unsigned char brightness = (unsigned char)simple_strtoul(buf, NULL, 10);
 
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_kraken_v3_report report_setbrightness = get_razer_kraken_request_report_brightness(brightness);
+    struct razer_krakenv3_report report_setbrightness = get_razer_krakenv3_request_report_brightness(brightness);
 
     // USB_DEVICE_ID_RAZER_KRAKEN_V3
     mutex_lock(&device->lock);
@@ -422,7 +422,7 @@ static ssize_t razer_attr_read_matrix_brightness(struct device *dev, struct devi
 static ssize_t razer_attr_write_matrix_effect_breath(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_kraken_v3_report report_effect_breath = get_razer_kraken_request_report_effect_breath();
+    struct razer_krakenv3_report report_effect_breath = get_razer_krakenv3_request_report_effect_breath();
 
     //#to_review
     /*printk(KERN_WARNING "razerkraken: Breathing mode only accepts RGB (3byte), RGB RGB (6byte) or RGB RGB RGB (9byte)\n");
@@ -453,7 +453,7 @@ static ssize_t razer_attr_read_matrix_effect_breath(struct device *dev, struct d
 static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_attribute *attr, char *buf)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_krakenv3_technical_report report = get_krakenv3_request_technical_report(0x16, 0x7f00);
+    struct razer_krakenv3_device_info_report report = get_krakenv3_request_technical_report(0x16, 0x7f00);
 
     // Basically some simple caching
     // Also skips going to device if it doesn't contain the serial
@@ -462,7 +462,7 @@ static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_a
         mutex_lock(&device->lock);
         device->data[0] = 0x00;
 
-        razer_krakenv3_send_control_msg_generic(device->usb_dev, sizeof(struct razer_krakenv3_technical_report), &report);
+        razer_krakenv3_send_control_msg_generic(device->usb_dev, sizeof(struct razer_krakenv3_device_info_report), &report);
         msleep(25);
 
         // Check for actual data
@@ -494,14 +494,14 @@ static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_a
 static ssize_t razer_attr_read_firmware_version(struct device *dev, struct device_attribute *attr, char *buf)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
-    struct razer_krakenv3_technical_report report = get_krakenv3_request_technical_report(0x02, 0x0030);
+    struct razer_krakenv3_device_info_report report = get_krakenv3_request_technical_report(0x02, 0x0030);
 
     // Basically some simple caching
     if(device->firmware_version[0] != 1) {
 
         mutex_lock(&device->lock);
         device->data[0] = 0x00;
-        razer_krakenv3_send_control_msg_generic(device->usb_dev, sizeof(struct razer_krakenv3_technical_report), &report);
+        razer_krakenv3_send_control_msg_generic(device->usb_dev, sizeof(struct razer_krakenv3_device_info_report), &report);
         msleep(25);
 
         // Check for actual data
