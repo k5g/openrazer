@@ -346,7 +346,7 @@ static ssize_t razer_attr_write_matrix_effect_none(struct device *dev, struct de
  *
  * Static effect mode is activated whenever the file is written to with 3 bytes #to_review
  */
-static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+/*static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
     struct razer_krakenv3_report report_effect_static = get_razer_krakenv3_request_report_effect_static();
@@ -366,6 +366,38 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
     mutex_lock(&device->lock);
     razer_krakenv3_send_control_msg(device->usb_dev, &report_effect_static);
     razer_krakenv3_send_control_msg(device->usb_dev, &report_setcolor);
+    mutex_unlock(&device->lock);
+
+    return count;
+}*/
+static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+    struct razer_kraken_device *device = dev_get_drvdata(dev);
+    struct razer_krakenv3_report report_effect_static = get_razer_krakenv3_request_report_effect_static();
+    struct razer_krakenv3_report report_setcolor = {0};
+    struct razer_rgb kraken_v3_rgb = {0};
+
+    // USB_DEVICE_ID_RAZER_KRAKEN_V3
+    if (count != 3 && count != 4) { //#to_review
+        printk(KERN_WARNING "razerkraken: Static mode only accepts RGB (3byte) or RGB with intensity (4byte)\n");
+        return -EINVAL;
+    }
+    kraken_v3_rgb.r = buf[0];
+    kraken_v3_rgb.g = buf[1];
+    kraken_v3_rgb.b = buf[2];
+    report_setcolor = get_razer_krakenv3_request_report_effect_rgb(&kraken_v3_rgb);
+
+    if(buf[0] != 0) {
+        report_effect_static.arguments[1] = buf[0];
+    }
+    if(buf[2] != 0) {
+        report.sub_command = buf[2];
+    }
+
+    mutex_lock(&device->lock);
+    razer_krakenv3_send_control_msg(device->usb_dev, &report_effect_static);
+    if(report_effect_static.arguments[1]==0x08)
+        razer_krakenv3_send_control_msg(device->usb_dev, &report_setcolor);
     mutex_unlock(&device->lock);
 
     return count;
