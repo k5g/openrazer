@@ -49,9 +49,9 @@ struct razer_krakenv3_device_info_report {
 };
 
 struct razer_krakenv3_report {
-    unsigned char header; /*0x40*/
-    unsigned char command_class;
-    unsigned char sub_command;
+    unsigned char report_id; /*0x40*/
+    unsigned char command;
+    unsigned char extra;
     unsigned char arguments[10];
 };
 

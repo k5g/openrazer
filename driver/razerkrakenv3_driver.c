@@ -24,25 +24,22 @@ MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE(DRIVER_LICENSE);
 
-/**
- * Get initialised razer kraken v3 report
- */
-static struct razer_krakenv3_report get_razer_krakenv3_request_report(unsigned char command_class)
+static struct razer_krakenv3_report get_razer_krakenv3_request_report(unsigned char command)
 {
-    struct razer_krakenv3_report new_report;
-    memset(&new_report, 0, sizeof(struct razer_krakenv3_report));
+    struct razer_krakenv3_report report;
+    memset(&report, 0, sizeof(struct razer_krakenv3_report));
 
-    new_report.header = 0x40;
-    new_report.command_class = command_class;
+    report.report_id = 0x40;
+    report.command = command;
 
-    return new_report;
+    return report;
 }
 
 static struct razer_krakenv3_report get_razer_krakenv3_request_report_effect_none(void)
 {
     struct razer_krakenv3_report report = get_razer_krakenv3_request_report(0x01);
     report.arguments[1] = 0x08;
-    report.sub_command = 1;
+    report.extra = 1;
 
     return report;
 }
@@ -152,9 +149,6 @@ static int razer_krakenv3_send_control_msg(struct usb_device *usb_dev,struct raz
 }
 
 
-/**
- * Get a union containing the effect bitfield
- */
 static union razer_kraken_effect_byte get_kraken_effect_byte(void)
 {
     union razer_kraken_effect_byte effect_byte;
@@ -163,9 +157,6 @@ static union razer_kraken_effect_byte get_kraken_effect_byte(void)
     return effect_byte;
 }
 
-/**
- * Get the current effect
- */
 static unsigned char get_current_effect(struct device *dev)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
@@ -248,21 +239,11 @@ static unsigned int get_rgb_from_addr(struct device *dev, unsigned char len, cha
     return written;
 }
 
-/**
- * Read device file "version"
- *
- * Returns a string
- */
 static ssize_t razer_attr_read_version(struct device *dev, struct device_attribute *attr, char *buf)
 {
     return sprintf(buf, "%s\n", DRIVER_VERSION);
 }
 
-/**
- * Read device file "device_type"
- *
- * Returns friendly string of device type
- */
 static ssize_t razer_attr_read_device_type(struct device *dev, struct device_attribute *attr, char *buf)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
@@ -281,31 +262,16 @@ static ssize_t razer_attr_read_device_type(struct device *dev, struct device_att
     return sprintf(buf, device_type);
 }
 
-/**
- * Write device file "test"
- *
- * Does nothing
- */
 static ssize_t razer_attr_write_test(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     return count;
 }
 
-/**
- * Read device file "test"
- *
- * Returns a string
- */
 static ssize_t razer_attr_read_test(struct device *dev, struct device_attribute *attr, char *buf)
 {
     return sprintf(buf, "\n");
 }
 
-/**
- * Write device file "mode_spectrum"
- *
- * Specrum effect mode is activated whenever the file is written to
- */
 static ssize_t razer_attr_write_matrix_effect_spectrum(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
@@ -319,11 +285,6 @@ static ssize_t razer_attr_write_matrix_effect_spectrum(struct device *dev, struc
     return count;
 }
 
-/**
- * Write device file "mode_none"
- *
- * None effect mode is activated whenever the file is written to
- */
 static ssize_t razer_attr_write_matrix_effect_none(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
@@ -341,12 +302,7 @@ static ssize_t razer_attr_write_matrix_effect_none(struct device *dev, struct de
 }
 
 
-/**
- * Write device file "mode_static"
- *
- * Static effect mode is activated whenever the file is written to with 3 bytes #to_review
- */
-/*static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
     struct razer_krakenv3_report report_effect_static = get_razer_krakenv3_request_report_effect_static();
@@ -369,8 +325,8 @@ static ssize_t razer_attr_write_matrix_effect_none(struct device *dev, struct de
     mutex_unlock(&device->lock);
 
     return count;
-}*/
-static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+}
+/*static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
     struct razer_krakenv3_report report_effect_static = get_razer_krakenv3_request_report_effect_static();
@@ -401,7 +357,7 @@ static ssize_t razer_attr_write_matrix_effect_static(struct device *dev, struct 
     mutex_unlock(&device->lock);
 
     return count;
-}
+}*/
 
 
 static ssize_t razer_attr_write_matrix_brightness(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
@@ -422,11 +378,6 @@ static ssize_t razer_attr_write_matrix_brightness(struct device *dev, struct dev
     return count;
 }
 
-/**
- * Read device file "mode_static"
- *
- * Returns 4 bytes for config
- */
 static ssize_t razer_attr_read_matrix_effect_static(struct device *dev, struct device_attribute *attr, char *buf)
 {
     return get_rgb_from_addr(dev, 0x04, buf); //#to_review
@@ -446,11 +397,6 @@ static ssize_t razer_attr_read_matrix_brightness(struct device *dev, struct devi
     return 0xff;
 }
 
-/**
- * Write device file "mode_breath"
- *
- * Breathing effect mode is activated whenever the file is written to with 3,6 or 9 bytes
- */
 static ssize_t razer_attr_write_matrix_effect_breath(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
@@ -467,21 +413,11 @@ static ssize_t razer_attr_write_matrix_effect_breath(struct device *dev, struct 
     return count;
 }
 
-/**
- * Read device file "mode_breath"
- *
- * Returns 4, 8, 12 bytes for config
- */
 static ssize_t razer_attr_read_matrix_effect_breath(struct device *dev, struct device_attribute *attr, char *buf)
 {
     return get_rgb_from_addr(dev, 0x04, buf); //#to_review
 }
 
-/**
- * Read device file "serial"
- *
- * Returns a string
- */
 static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_attribute *attr, char *buf)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
@@ -518,11 +454,6 @@ static ssize_t razer_attr_read_device_serial(struct device *dev, struct device_a
     return sprintf(buf, "%s\n", &device->serial[0]);
 }
 
-/**
- * Read device file "get_firmware_version"
- *
- * Returns a string
- */
 static ssize_t razer_attr_read_firmware_version(struct device *dev, struct device_attribute *attr, char *buf)
 {
     struct razer_kraken_device *device = dev_get_drvdata(dev);
@@ -554,11 +485,6 @@ static ssize_t razer_attr_read_firmware_version(struct device *dev, struct devic
     return sprintf(buf, "v%x%x\n", device->firmware_version[1], device->firmware_version[2]);
 }
 
-/**
- * Read device file "matrix_current_effect"
- *
- * Returns a string
- */
 static ssize_t razer_attr_read_matrix_current_effect(struct device *dev, struct device_attribute *attr, char *buf)
 {
     unsigned char current_effect = get_current_effect(dev);
@@ -566,19 +492,11 @@ static ssize_t razer_attr_read_matrix_current_effect(struct device *dev, struct 
     return sprintf(buf, "%02x\n", current_effect);
 }
 
-/**
- * Write device file "device_mode"
- */
 static ssize_t razer_attr_write_device_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     return count;
 }
 
-/**
- * Read device file "device_mode"
- *
- * Returns a string
- */
 static ssize_t razer_attr_read_device_mode(struct device *dev, struct device_attribute *attr, char *buf)
 {
     buf[0] = 0x00;
